@@ -68,16 +68,16 @@ You can have multiple simultaneous steppers, all moving at different speeds and 
 **Parameters**
 * *Interface* - Number of pins to interface to. 1, 2, 4 or 8 are supported, but it is preferred to use the MotorInterfaceType symbolic names. Defaults to DRIVER (2) pins.
 * *pin1* - Pin number for motor pin 1. Defaults to D2. For a DRIVER interface, this is the Step input to the driver. Low to high transition means to step
-* *pin2* - Pin number for motor pin 2. Defaults to D3. For a DRIVER interface, this is the Direction input to the driver. High means forward.
+* *pin2* - Pin number for motor pin 2. Defaults to D3. For a DRIVER interface, this is the Direction input to the driver. High means clockwise.
 * *pin3* - Pin number for motor pin 3. Defaults to pin 4.
 * *pin4* - Pin number for motor pin 4. Defaults to pin 5.
 * *enable* If this is true (the default), enableOutputs() will be called to enable the output pins at construction time.
 
 ###### Alternate Constructor
-Will call your own functions for forward and backward steps. You can have multiple simultaneous steppers, all moving at different speeds and accelerations, provided you call their run() functions at frequent enough intervals. Current Position is set to 0, target position is set to 0. MaxSpeed and Acceleration default to 1.0. Any motor initialization should happen before hand, no pins are used or initialized.
+Will call your own functions for clockwise and counterClockwise steps. You can have multiple simultaneous steppers, all moving at different speeds and accelerations, provided you call their run() functions at frequent enough intervals. Current Position is set to 0, target position is set to 0. MaxSpeed and Acceleration default to 1.0. Any motor initialization should happen before hand, no pins are used or initialized.
 **Parameters**
-* *forward* -  void-returning procedure that will make a forward step
-* *backward* - void-returning procedure that will make a backward step
+* *clockwise* -  void-returning procedure that will make a clockwise step
+* *counterClockwise* - void-returning procedure that will make a counterClockwise step
 
 ## Contributing
 
