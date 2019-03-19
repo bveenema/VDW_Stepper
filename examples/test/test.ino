@@ -58,7 +58,7 @@ void loop() {
         ResetTestingState();
 
         // Set Stepper0 to run every second
-        Stepper0.run(1000);
+        Stepper0.run(ConstantSpeed, 1000);
         setupTest = true;
       }
       if(!runTest) {

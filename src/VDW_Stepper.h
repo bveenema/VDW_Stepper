@@ -22,9 +22,10 @@ inline uint32_t milliStepsToUsecInterval(int32_t milliSteps){
 class VDW_Stepper;
 typedef VDW_Stepper* StepperPtr;
 
-enum{
-  Stepper_ConstantSpeed,
-  Stepper_Accelerations,
+enum Mode{
+  NoChange,
+  ConstantSpeed,
+  Accelerations,
 };
 
 
@@ -48,38 +49,39 @@ public:
   // Run Speed
   // Move the motor indefinitely with the last set or provided settings
   // Using any of the optional parameters does NOT overide the speed, acceleration or mode settings
+  // \param[Mode] mode - the mode of the stepper. Constant Speed or Accelerations [optional]
   // \param[i32] speed - the speed of the motor will turn (mSteps/sec). Negative == CCW, Positive == CW [optional]
   // \param[u32] acceleration - the acceleration for the motor. (mSteps/sec^2) [optional]
-  // \param[bool] mode - the mode of the stepper 0 == Constant Speed, 1 == Accelerations
-  void run(int32_t speed=0, bool mode=0, uint32_t acceleration=0);
+  void run(Mode mode=NoChange, int32_t speed=0, uint32_t acceleration=0);
 
   // Move Absolute
   // Move the motor to a new target position.
   // Using any of the optional parameters does NOT overide the speed, acceleration or mode settings.
   // \param[i32] position - the new target position (steps). Negative == CCW, Positive == CW
+  // \param[Mode] mode - the mode of the stepper. Constant Speed or Accelerations [optional]
   // \param[i32] speed - the speed of the motor will turn (mSteps/sec). Negative == CCW, Positive == CW [optional]
   // \param[u32] acceleration - the acceleration for the motor. (mSteps/sec^2) [optional]
-  // \param[bool] mode - the mode of the stepper 0 == Constant Speed, 1 == Accelerations
-  void moveAbsolute(int32_t position, [uint32_t speed], [bool constantSpeed], [uint32_t accel]);
+  void moveAbsolute(int32_t position, Mode mode=NoChange, int32_t speed=0, uint32_t acceleration=0);
 
   // Move Relative
   // Move the motor to a distance relative to the current position.
   // Updates the target position and keeps current position accurate.
   // Using any of the optional parameters does NOT overide the speed, acceleration or mode settings.
   // \param[i32] position - the new target position (steps). Negative == CCW, Positive == CW
+  // \param[Mode] mode - the mode of the stepper. Constant Speed or Accelerations [optional]
   // \param[i32] speed - the speed of the motor will turn (mSteps/sec). Negative == CCW, Positive == CW [optional]
   // \param[u32] acceleration - the acceleration for the motor. (mSteps/sec^2) [optional]
-  // \param[bool] mode - the mode of the stepper 0 == Constant Speed, 1 == Accelerations
-  void moveRelative(int32_t distance, [uint32_t speed], [bool constantSpeed], [uint32_t accel]);
+  void moveRelative(int32_t distance, Mode mode=NoChange, int32_t speed=0, uint32_t acceleration=0);
 
   // Stop
-  // Stops the motor by setting a new target postion. 
+  // Stops the motor by setting a new target postion. Clears any temporary settings
   // If constant speed (runSpeed), the motor is stopped immediately.
   // If accel/decel are use (run) the deceleration is used to safely stop the motor.
   void stop();
 
   // Pause
-  // Stops the motor but maintains the target position. Motor can be started again with resume()
+  // Stops the motor but maintains the target position. Does not clear temporary settings
+  // Motor can be started again with resume()
   // If constant speed (runSpeed), the motor is stopped immediately.
   // if accel/decel (run), the deceleration is used to safely stop the motor
   void pause();
@@ -87,7 +89,6 @@ public:
   // Emergency Stop
   // Stops the motor immediately regardless of constant speed (runSpeed) or accel/decel (run)
   // Clears position and target position
-  // if a value for disableTimeout greater than 0 is passed, the disable stepper function will be called after that amount of time (milli-seconds)
   void eStop();
 
   // Disable
@@ -112,15 +113,25 @@ private:
   void (*_enableStepper)();
   void (*_disableStepper)();
 
-  // STEP DATA
-  volatile bool _direction = false; // current direction the motor is spinning, 1 == CW
-  volatile int32_t _speed = 0; // the current speed (milli-steps/sec). Negative == CCW, Positive == CW
-  volatile int32_t _safeSpeed = 0; // the maximum safe speed a motor should every be run. 0 == No Max
-  volatile int32_t _stepInterval = 0; // the time between the steps (value < 1 means no steps)
-  bool _constantSpeed = false; // True if the stepper is running at constant speed (no accel/decel)
+  // SETTINGS
+  Mode _mode = ConstantSpeed; // Stepper Mode (Constant Speed or Accelerations)
+  int32_t _speed = 0; // target speed (mStep/sec)
+  uint32_t _acceleration = 0; // acceleration (mStep/sec^2)
+  Mode _tempMode = NoChange; // temporary mode (Constant Speed or Accelerations)
+  int32_t _tempSpeed = 0; // temporary target speed (mStep/sec)
+  uint32_t _tempAcceleration = 0; // temporary acceleration (mStep/sec^2)
+  int32_t _safeSpeed = 0; // the maximum safe speed a motor should every be run. 0 == No Max
+
+  // POSITIONING
   int32_t _position = 0; // The current position of the motor in steps. Negative == CCW, Positive == CW
   int32_t _target = 0; // The position the motor is moving to in steps. Negative == CCW, Positive = CW
+  int32_t _tempTarget = 0; // Temporary target position. (used in pause)
 
+  // STEP DATA
+  volatile bool _direction = false; // current direction the motor is spinning, 1 == CW
+  volatile int32_t _cSpeed = 0; // the current speed (milli-steps/sec). Negative == CCW, Positive == CW
+  volatile int32_t _stepInterval = 0; // the time between the steps (value < 1 means no steps)
+  
   // STEP TIMING
   volatile static int lastDuration; // amount of time between Run_ISR() calls
   volatile int _stepTime = 0; // amount of time until the next step (value < 1 means no step due)
@@ -139,6 +150,8 @@ private:
   // in Constant Speed Mode
   // \return[int32_t] the next step interval (u-sec)
   int32_t computeNewSpeed();
+
+  void clearTemps();
 };
 
 #endif
