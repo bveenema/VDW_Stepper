@@ -50,7 +50,7 @@ void loop() {
       static bool setupTest = false;
       static uint32_t testTimer = millis();
       if(!printTestTitle){
-        Serial.printlnf("\n****************\nTest %d: One motor should turn CW every second\n****************\n",testNumber);
+        Serial.printlnf("\n****************\nTest %d: Two motors should turn CW every second\n****************\n",testNumber);
         printTestTitle = true;
       }
       if(!setupTest) {
@@ -59,6 +59,12 @@ void loop() {
 
         // Set Stepper0 to run every second
         Stepper0.run(ConstantSpeed, 1000);
+
+        // Set Stepper1 to run every second
+        Stepper1.setSpeed(1000);
+        Stepper1.setMode(ConstantSpeed);
+        Stepper1.run();
+        
         setupTest = true;
       }
       if(!runTest) {
