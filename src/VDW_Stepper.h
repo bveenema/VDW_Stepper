@@ -123,6 +123,7 @@ private:
   int32_t _safeSpeed = 0; // the maximum safe speed a motor should every be run. 0 == No Max
 
   // POSITIONING
+  bool _hasTarget = false; // True if the motor is currently running to a target postion (temp or normal). False if running indefinitely
   int32_t _position = 0; // The current position of the motor in steps. Negative == CCW, Positive == CW
   int32_t _target = 0; // The position the motor is moving to in steps. Negative == CCW, Positive = CW
   int32_t _tempTarget = 0; // Temporary target position. (used in pause)

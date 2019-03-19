@@ -53,19 +53,22 @@ void VDW_Stepper::run(Mode mode, int32_t speed, uint32_t acceleration){
   _tempSpeed = speed; // will assign 0 if nothing is passed
   _tempAcceleration = acceleration; // will assign 0 if nothing is passed
 
+  // Set the motor to run indefinitely
+  _hasTarget = false;
 
   // CONSTANT SPEED MODE
   if(_tempMode == ConstantSpeed 
     || (_mode == ConstantSpeed && _tempMode != Accelerations)){
     
+    // Get the speed
+    int32_t newSpeed = (_tempSpeed) ? (_tempSpeed) : (_speed);
+
     // Set the direction
-    _direction = (speed > 0) ? 1 : 0;
+    _direction = (newSpeed > 0) ? 1 : 0;
 
     // Calculate the ISR interval
-    if(speed == 0){
-      _stepInterval = 0;
-    }
-    _stepInterval = milliStepsToUsecInterval((_tempSpeed) ? (_tempSpeed) : (_speed));
+    if(newSpeed == 0)  _stepInterval = 0;
+    else _stepInterval = milliStepsToUsecInterval((_tempSpeed) ? (_tempSpeed) : (_speed));
     _stepTime = _stepInterval;
 
     // Enable the stepper
@@ -75,7 +78,6 @@ void VDW_Stepper::run(Mode mode, int32_t speed, uint32_t acceleration){
   // Restart the ISR if required
   if(VDW_Stepper::ISR_Enabled == false) 
     VDW_Stepper::Step_Timer.begin(VDW_Stepper::Run_ISR, 65535, hmSec); // duration does not matter, Run_ISR executes immediately which will change duration
-
 }
 
 void VDW_Stepper::stop(){
