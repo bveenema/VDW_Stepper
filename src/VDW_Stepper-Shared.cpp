@@ -3,9 +3,11 @@
 // Initialize Static Members
 StepperPtr VDW_Stepper::head = nullptr;
 IntervalTimer VDW_Stepper::Step_Timer;
-int VDW_Stepper::lastDuration = 0;
+volatile int VDW_Stepper::lastDuration = 0;
 bool VDW_Stepper::ISR_Enabled = false;
 
+
+// Print Steppers
 void VDW_Stepper::printSteppers(){
 	Serial.printlnf("------- Steppers -------");
 	StepperPtr cStepper = VDW_Stepper::head;
@@ -20,7 +22,10 @@ void VDW_Stepper::printSteppers(){
 // RUN ISR
 void VDW_Stepper::Run_ISR(){
 	// Check if ISR was disabled
-	if(VDW_Stepper::ISR_Enabled == false) VDW_Stepper::lastDuration = 0;
+	if(VDW_Stepper::ISR_Enabled == false){
+		VDW_Stepper::lastDuration = 0;
+		VDW_Stepper::ISR_Enabled = true;
+	}
 	
 
 	// Record time ISR start
@@ -41,7 +46,7 @@ void VDW_Stepper::Run_ISR(){
 			if(cStepper->_stepTime <= MIN_TIME_BETWEEN_RUN_ISR){
 				(cStepper->_direction) ? cStepper->_clockwise() : cStepper->_counterClockwise();
 				cStepper->_stepTime = cStepper->computeNewSpeed();
-				Serial.printlnf("Step Stepper %d, next: %d",index, cStepper->_stepTime);
+				// Serial.printlnf("Step Stepper %d, next: %d",index, cStepper->_stepTime);
 			}
 
 			// Determine the next time Run_ISR should fire
@@ -57,7 +62,7 @@ void VDW_Stepper::Run_ISR(){
 	// Remove ISR duration from _stepTime and nextDuration
 	uint32_t ISR_Duration = ((timeISREnded - timeISRStarted) / CPU_TICKS_PER_MICROSECOND()) + 1; // add 1 microsecond for time to 
 	cStepper = VDW_Stepper::head;
-	Serial.printlnf("ISR Duration: %d", ISR_Duration);
+	Serial.printlnf("\t\tISR Duration: %d", ISR_Duration);
 	while(cStepper != nullptr){
 		if(cStepper->_stepTime > 0 ) cStepper->_stepTime -= ISR_Duration;
 		cStepper = cStepper->next;
@@ -66,17 +71,18 @@ void VDW_Stepper::Run_ISR(){
 
 	// Setup for next Run_ISR
 	VDW_Stepper::lastDuration = nextDuration;
-	Serial.printlnf("Next ISR: %d", nextDuration);
+	Serial.printlnf("\t\tNext ISR: %d", nextDuration/1000);
 	if(nextDuration < MIN_TIME_BETWEEN_RUN_ISR) nextDuration = MIN_TIME_BETWEEN_RUN_ISR;
 	if(nextDuration == 0x7FFFFFFF){
 		VDW_Stepper::ISR_Enabled = false;
 		VDW_Stepper::Step_Timer.end();
-	}else if(VDW_Stepper::ISR_Enabled == false){
-		Serial.println("Start the ISR");
-		VDW_Stepper::ISR_Enabled = true;
-		VDW_Stepper::Step_Timer.begin(VDW_Stepper::Run_ISR, 655, uSec);
 	}else{
-		VDW_Stepper::Step_Timer.resetPeriod_SIT(nextDuration, uSec);
+		if(nextDuration <= 65535){
+			VDW_Stepper::Step_Timer.resetPeriod_SIT(nextDuration, uSec);
+		}else{
+			int timerVal = nextDuration/500; // convert uSec to hmSec
+			VDW_Stepper::Step_Timer.resetPeriod_SIT(timerVal, hmSec);
+		}
 	}
 	
 }
