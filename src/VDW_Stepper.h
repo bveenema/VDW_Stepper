@@ -34,10 +34,11 @@ public:
 
   // Init
   // Provides the stepper with functions to call when a clockwise or counterClockwise step is called
-  // \param[void *func(void)] clockwise - the clockwise step function
-  // \param[void *func(void)] counterClockwise - the counterClockwise step function
-  // \param[void *func(void)] enable - the enable function for the stepper (optional)
-  void init(void (*clockwise)(), void(*counterClockwise)(), void(*enable)() = nullptr);
+  // \param[void func(void)] clockwise - the clockwise step function
+  // \param[void func(void)] counterClockwise - the counterClockwise step function
+  // \param[void func(void)] enable - the enable function for the stepper [optional]
+  // \parat[void func(void)] disable - the disable function for the stepper [optional]
+  void init(void (*clockwise)(), void(*counterClockwise)(), void(*enable)()=nullptr, void(*disable)()=nullptr);
 
   // Run Speed
   // Runs the stepper at a constant speed (no accel/decel)

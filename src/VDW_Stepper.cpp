@@ -12,10 +12,11 @@ VDW_Stepper::VDW_Stepper(){
 	}
 }
 
-void VDW_Stepper::init(void (*clockwise)(), void(*counterClockwise)(), void(*enable)()){
+void VDW_Stepper::init(void (*clockwise)(), void(*counterClockwise)(), void(*enable)(), void(*disable)){
 	_clockwise = clockwise;
 	_counterClockwise = counterClockwise;
 	_enableStepper = enable;
+  _disableStepper = disable;
 }
 
 int32_t VDW_Stepper::computeNewSpeed(){
