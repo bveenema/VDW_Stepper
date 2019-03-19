@@ -20,36 +20,54 @@ void VDW_Stepper::init(void (*clockwise)(), void(*counterClockwise)(), void(*ena
 }
 
 int32_t VDW_Stepper::computeNewSpeed(){
-    if(_constantSpeed){
-      return _stepInterval;
-    }else{
-      return 0;
-    }
+  if(_constantSpeed){
+    return _stepInterval;
+  }else{
+    return 0;
   }
+}
 
-	void VDW_Stepper::runSpeed(int32_t speed){
-    // Check for change
-    if(_constantSpeed && speed == _speed) return;
+void VDW_Stepper::runSpeed(int32_t speed){
+  // Check for change
+  if(_constantSpeed && speed == _speed) return;
 
-    // Constrain speed if Safe Speed is set
-    if(_safeSpeed > 0) speed = Constrain(speed, -_safeSpeed, _safeSpeed);
+  // Constrain speed if Safe Speed is set
+  if(_safeSpeed > 0) speed = Constrain(speed, -_safeSpeed, _safeSpeed);
 
-    // Set the direction
-    _direction = (speed > 0) ? 1 : 0;
+  // Set the direction
+  _direction = (speed > 0) ? 1 : 0;
 
-    // Calculate the ISR interval
-    if(speed == 0){
-      _stepInterval = 0;
-    }
-    _stepInterval = milliStepsToUsecInterval(speed);
-		_stepTime = _stepInterval;
-
-    // Enable the stepper
-    if(_enableStepper) _enableStepper();
-
-    // Set Stepper to Constant Speed Mode
-    _constantSpeed = true;
-
-    // Restart the ISR if required
-    if(VDW_Stepper::ISR_Enabled == false) VDW_Stepper::Run_ISR();
+  // Calculate the ISR interval
+  if(speed == 0){
+    _stepInterval = 0;
   }
+  _stepInterval = milliStepsToUsecInterval(speed);
+  _stepTime = _stepInterval;
+
+  // Enable the stepper
+  if(_enableStepper) _enableStepper();
+
+  // Set Stepper to Constant Speed Mode
+  _constantSpeed = true;
+
+  // Restart the ISR if required
+  if(VDW_Stepper::ISR_Enabled == false) 
+    VDW_Stepper::Step_Timer.begin(VDW_Stepper::Run_ISR, 65535, hmSec); // duration does not matter, Run_ISR executes immediately which will change duration
+}
+
+void VDW_Stepper::stop(){
+  if(_constantSpeed){ 
+    _stepInterval = 0; // Stop immediately
+    _target = 0; // Set target position to 0
+  }else{
+    return;
+  }
+}
+
+void VDW_Stepper::pause(){
+  if(_constantSpeed){ // Stop immediately if Constant Speed
+    _stepInterval = 0;
+  }else{
+    return;
+  }
+}
